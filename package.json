@@ -1,0 +1,33 @@
+{
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-preset-env": "^1.7.0",
+    "babel-register": "^6.26.0",
+    "eslint": "^5.16.0",
+    "eslint-config-recommended": "^4.0.0",
+    "glob": "^7.1.4",
+    "jquery": "3.4.1",
+    "strip-json-comments": "^2.0.1"
+  },
+  "engines": {
+    "node": ">=6",
+    "npm": ">=3"
+  },
+  "babel": {
+    "presets": [
+      "env"
+    ]
+  },
+  "license": "ZZZ",
+  "name": "StudioDudio Web Audio Player",
+  "scripts": {
+  },
+  "version": "0.0.1",
+  "description": "Plays a sound file and adds playful effects.",
+  "files": [
+  ],
+  "repository": {
+    "type": "git",
+    "url": ""
+  }
+}
