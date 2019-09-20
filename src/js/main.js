@@ -1,3 +1,5 @@
+import './dropper';
+
 // Get UI elements from the DOM
 let mediaElement = document.querySelector('audio');
 const audioFile = document.querySelector('#audio_file');
@@ -8,6 +10,7 @@ const cutButton = document.querySelector('#cut_button');
 
 // Setup the AudioContext
 const audioContext = new window.AudioContext();
+let effectsNodeChain;
 // let sourceAudioNode; // Set by audioFile.onchange.
 let audioBuffer;
 let bufferSourceNode;
@@ -35,9 +38,9 @@ audioFile.onchange = async function() {
   }
 };
 
-mediaElement.addEventListener('canplay', function() {
-  console.log('canplay triggered');
-});
+// mediaElement.addEventListener('canplay', function() {
+//   console.log('canplay triggered');
+// });
 
 // play/pause audio
 playButton.addEventListener('click', function() {
@@ -57,23 +60,21 @@ playButton.addEventListener('click', function() {
 
 // Gain node
 const gainNode = new GainNode(audioContext, { gain: 0.5 });
-gainControl.addEventListener('input', function() {
+gainControl.oninput = function() {
   gainNode.gain.value = this.value;
-  console.log('Gain set: ', this.value);
-}, false);
+  console.log('Gain set: ', gainNode.gain.value);
+};
 
 // Pan node
-const panNode = new StereoPannerNode(audioContext, { pan: 0 });
-panControl.addEventListener('input', function() {
+const panNode = new StereoPannerNode(audioContext, { pan: 0.0 });
+panControl.oninput = function() {
   panNode.pan.value = this.value;
   console.log('Pan set: ', this.value);
-}, false);
+};
 
 // Connect our graph. This works fine, even if the media file changes.
-const sourceAudioNode = new MediaElementAudioSourceNode(audioContext, { mediaElement });
-const effectsNodeChain = gainNode.connect(panNode).connect(audioContext.destination);
-// sourceAudioNode.connect(gainNode).connect(panNode).connect(audioContext.destination);
-
+gainNode.connect(panNode).connect(audioContext.destination);
+effectsNodeChain = gainNode; // A generic name for whatever node happens to be the head of the FX chain
 
 function setStatePaused() {
   playButton.innerText = 'Play';
