@@ -1,4 +1,6 @@
-import './dropper';
+'use strict';
+import keyMap from './key_map.js';
+import Cutter from './cutter.js';
 
 // Get UI elements from the DOM
 let mediaElement = document.querySelector('audio');
@@ -72,9 +74,20 @@ panControl.oninput = function() {
   console.log('Pan set: ', this.value);
 };
 
+// Cutter Node
+const cutterNode = new Cutter(audioContext);
+cutButton.onmousedown = document.onkeydown = (e) => {
+  console.log('Cut on! ', e);
+  cutterNode.on();
+}
+cutButton.onmouseup = document.onkeyup = (e) => {
+  console.log('Cut off! ', e);
+  cutterNode.off();
+}
+
 // Connect our graph. This works fine, even if the media file changes.
-gainNode.connect(panNode).connect(audioContext.destination);
-effectsNodeChain = gainNode; // A generic name for whatever node happens to be the head of the FX chain
+cutterNode.connect(gainNode).connect(panNode).connect(audioContext.destination);
+effectsNodeChain = cutterNode; // A generic name for whatever node happens to be the head of the FX chain
 
 function setStatePaused() {
   playButton.innerText = 'Play';
