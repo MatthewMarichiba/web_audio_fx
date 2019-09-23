@@ -3,8 +3,9 @@ import keyMap from './key_map.js';
 import Cutter from './cutter.js';
 
 // Get UI elements from the DOM
-let mediaElement = document.querySelector('audio');
 const audioFile = document.querySelector('#audio_file');
+const fileName = document.querySelector('#fileName');
+const selectFileButton = document.querySelector('#select_file_button');
 const gainControl = document.querySelector('#volume');
 const panControl = document.querySelector('#pan');
 const playButton = document.querySelector('#play_button');
@@ -13,18 +14,20 @@ const cutButton = document.querySelector('#cut_button');
 // Setup the AudioContext
 const audioContext = new window.AudioContext();
 let effectsNodeChain;
-// let sourceAudioNode; // Set by audioFile.onchange.
 let audioBuffer;
 let bufferSourceNode;
 let playbackStartTime = 0; // When was the last time playback started?
 let playbackOffset = 0; // How far into the buffer have we played so far?
 
 // listen for changes to the input sound file
+selectFileButton.onclick = (e) => {
+  audioFile.click();
+};
 audioFile.onchange = async function() {
   if (this.files.length) { // Only set the file if a file was chosen.
     var files = this.files;
-    var file = URL.createObjectURL(files[0]);
-    mediaElement.src = file;
+    console.log(files);
+    fileName.innerText = files[0].name;
     playButton.removeAttribute('disabled');
     setStatePaused();
 
@@ -37,28 +40,31 @@ audioFile.onchange = async function() {
     const arrayBuffer = await files[0].arrayBuffer();
     audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
     console.log({ audioBuffer });
+  } else {
+    togglePlaybackState({ forcePause: true });
+    setStatePaused();
+    fileName.innerText = '';
+    playButton.setAttribute('disabled', true);
   }
 };
 
-// mediaElement.addEventListener('canplay', function() {
-//   console.log('canplay triggered');
-// });
-
 // play/pause audio
-playButton.addEventListener('click', function() {
-  const setToPlayingState = this.getAttribute('aria-checked') === 'true' ? false : true;
-  if (setToPlayingState) { // Start playing if currently paused
+playButton.onclick = togglePlaybackState;
+function togglePlaybackState(options = { forcePlay: false, forcePause: false }) {
+  const toggleToPlayingState = playButton.getAttribute('aria-checked') === 'true' ? false : true;
+  // Start playing if: currently paused or forcePlay is set.  forcePause==true triggers the "else" condition
+  if ((toggleToPlayingState || options.forcePlay) && !options.forcePause) {
     playbackStartTime = audioContext.currentTime;
     console.log('Play at ', playbackOffset, ', currentTime: ', audioContext.currentTime);
     playAudioBufferAtOffset(playbackOffset);
     setStatePlaying();
-  } else { // no need to check if currently playing. No harm in calling .stop() again. // if (this.dataset.playing === 'true') {
+  } else { // no need to check if currently playing. No harm in calling .stop() again. // if (playButton.dataset.playing === 'true') {
     playbackOffset += audioContext.currentTime - playbackStartTime;
     console.log('Pause at ', playbackOffset);
     bufferSourceNode.stop();
     setStatePaused();
   }
-}, false);
+}
 
 // Gain node
 const gainNode = new GainNode(audioContext, { gain: 0.5 });
@@ -76,27 +82,61 @@ panControl.oninput = function() {
 
 // Cutter Node
 const cutterNode = new Cutter(audioContext);
-cutButton.onmousedown = document.onkeydown = (e) => {
+
+// Assign keyboard mappings to keyboard events
+function activateKeyMappings() {
+  // Map keyboard (not MIDI) key presses
+  document.onkeydown = document.onkeyup = (e) => {
+    const keydown = e.type === 'keydown';
+    const keyup = e.type === 'keyup';
+    const key = e.key.toLowerCase();
+
+    switch (key) {
+      case keyMap.cutter.trigger.keyboard: {
+        if (keydown) {
+          console.log('cut key down');
+          cutterNode.on();
+        } else {
+          cutterNode.off();
+          console.log('cut key up');
+        }
+        break;
+      }
+      case keyMap.play_pause.toggle.keyboard: {
+        if (keydown) {
+          togglePlaybackState();
+        }
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+  }
+}
+
+cutButton.onmousedown = (e) => {
   console.log('Cut on! ', e);
   cutterNode.on();
 }
-cutButton.onmouseup = document.onkeyup = (e) => {
+cutButton.onmouseup = (e) => {
   console.log('Cut off! ', e);
   cutterNode.off();
 }
 
+activateKeyMappings();
 // Connect our graph. This works fine, even if the media file changes.
 cutterNode.connect(gainNode).connect(panNode).connect(audioContext.destination);
 effectsNodeChain = cutterNode; // A generic name for whatever node happens to be the head of the FX chain
 
 function setStatePaused() {
-  playButton.innerText = 'Play';
+  playButton.innerText = 'Play (P)';
   playButton.dataset.playing = 'false';
   playButton.setAttribute( 'aria-checked', 'false' );
 }
 
 function setStatePlaying() {
-  playButton.innerText = 'Pause';
+  playButton.innerText = 'Pause (P)';
   playButton.dataset.playing = 'true';
   playButton.setAttribute( 'aria-checked', 'true' );
 }

@@ -23,8 +23,9 @@
 
     <div class="row">
       <!-- Input control for user to pick a file. -->
-      <input id="audio_file" type="file" accept="audio/*" class="btn btn-primary"/>
-      <audio id="audio_player" />
+      <button id="select_file_button" type="button" class="btn btn-primary">Choose sound file</button>
+      <span id="fileName"></span>
+      <input id="audio_file" type="file" accept="audio/*" class="d-none" />
     </div>
 
 
@@ -49,7 +50,7 @@
     <div class="row">
       <button id="play_button" class="btn btn-primary"
               role="switch" aria-checked="false" disabled>
-        Play
+        Play (P)
       </button>
     </div>
 
