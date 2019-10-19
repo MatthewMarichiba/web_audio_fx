@@ -1,14 +1,17 @@
 'use strict';
 import keyMap from './key_map.js';
 import Cutter from './cutter.js';
+import Puncher from './puncher.js';
 
 // Get UI elements from the DOM
 const audioFile = document.querySelector('#audio_file');
 const fileName = document.querySelector('#fileName');
 const selectFileButton = document.querySelector('#select_file_button');
+const playButton = document.querySelector('#play_button');
 const gainControl = document.querySelector('#volume');
 const panControl = document.querySelector('#pan');
-const playButton = document.querySelector('#play_button');
+const lpFilterInput = document.querySelector('#lpfilter_value');
+const lpFilterSlider = document.querySelector('#lpfilter_slider');
 const cutButton = document.querySelector('#cut_button');
 
 // Setup the AudioContext
@@ -80,55 +83,37 @@ panControl.oninput = function() {
   console.log('Pan set: ', this.value);
 };
 
+// Lo-pass Filter
+const lpFilterNode = new BiquadFilterNode(audioContext, { frequency: 20000, Q: 1 });
+lpFilterSlider.oninput = function() {
+  lpFilterNode.frequency.value = this.value;
+  lpFilterInput.value = this.value;
+  console.log('LP Frequency set: ', this.value);
+};
+
 // Cutter Node
 const cutterNode = new Cutter(audioContext);
-
-// Assign keyboard mappings to keyboard events
-function activateKeyMappings() {
-  // Map keyboard (not MIDI) key presses
-  document.onkeydown = document.onkeyup = (e) => {
-    const keydown = e.type === 'keydown';
-    const keyup = e.type === 'keyup';
-    const key = e.key.toLowerCase();
-
-    switch (key) {
-      case keyMap.cutter.trigger.keyboard: {
-        if (keydown) {
-          console.log('cut key down');
-          cutterNode.on();
-        } else {
-          cutterNode.off();
-          console.log('cut key up');
-        }
-        break;
-      }
-      case keyMap.play_pause.toggle.keyboard: {
-        if (keydown) {
-          togglePlaybackState();
-        }
-        break;
-      }
-      default: {
-        break;
-      }
-    }
-  }
-}
-
 cutButton.onmousedown = (e) => {
-  console.log('Cut on! ', e);
   cutterNode.on();
-}
+};
 cutButton.onmouseup = (e) => {
-  console.log('Cut off! ', e);
   cutterNode.off();
-}
+};
+
+// Puncher Node
+const puncherNode = new Puncher(audioContext);
+
+// Stretcher Node
+const stretchNode = new AudioBufferSourceNode(audioContext);
+
 
 activateKeyMappings();
 // Connect our graph. This works fine, even if the media file changes.
-cutterNode.connect(gainNode).connect(panNode).connect(audioContext.destination);
+cutterNode.connect(puncherNode).connect(lpFilterNode).connect(gainNode).connect(panNode).connect(audioContext.destination);
 effectsNodeChain = cutterNode; // A generic name for whatever node happens to be the head of the FX chain
 
+
+//////////////////// FUNCTION DEFINITIONS //////////////////////
 function setStatePaused() {
   playButton.innerText = 'Play (P)';
   playButton.dataset.playing = 'false';
@@ -156,7 +141,6 @@ async function playAudioBufferAtOffset(time) {
   bufferSourceNode.start(0, time);
 }
 
-
 function handleBufferEnded() {
   // Only respond if the buffer ended naturally; ie, wasn't stopped by Pause button.
   if (playButton.dataset.playing === 'true') { // If button still shows "Play", then buffer ran out of samples
@@ -164,5 +148,56 @@ function handleBufferEnded() {
     setStatePaused(); // Reset controls to show "Play"
     playbackStartTime = 0;
     playbackOffset = 0; // Reset start offset so that the next "Play" starts from the beginning.
+  }
+}
+
+// Assign keyboard mappings to keyboard events
+function activateKeyMappings() {
+  // Map keyboard (not MIDI) key presses
+  document.onkeydown = document.onkeyup = (e) => {
+    const keydown = e.type === 'keydown';
+    const keyup = e.type === 'keyup';
+    const key = e.key.toLowerCase();
+    console.log(e.type, ': ', e.key);
+
+    switch (key) {
+      case keyMap.cutter.trigger.keyboard: {
+        if (keydown) {
+          cutterNode.on();
+        } else {
+          cutterNode.off();
+        }
+        break;
+      }
+      case keyMap.play_pause.toggle.keyboard: {
+        if (keydown) {
+          togglePlaybackState();
+        }
+        break;
+      }
+      case keyMap.puncher.arm.keyboard:
+      case keyMap.puncher.trigger.keyboard: {
+        if (keydown) {
+          if (key === keyMap.puncher.arm.keyboard) {
+            puncherNode.arm();
+          }
+          if (key === keyMap.puncher.trigger.keyboard) {
+            puncherNode.on();
+          }
+        }
+
+        if (keyup) {
+          if (key === keyMap.puncher.arm.keyboard) {
+            puncherNode.disarm();
+          }
+          if (key === keyMap.puncher.trigger.keyboard) {
+            puncherNode.off();
+          }
+        }
+      }
+      default: {
+        break;
+      }
+    }
   }
 }

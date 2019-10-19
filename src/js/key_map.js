@@ -7,6 +7,13 @@ export const keyMap = {
   cutter: {
     trigger: { keyboard: 'c', midi: undefined }
   },
+  puncher: {
+    arm: { keyboard: 'v', midi: undefined },
+    trigger: { keyboard: 'b', midi: undefined }
+  },
+  stretcher: {
+    trigger: { keyboard: 's', midi: undefined }
+  },
   pan: {
     up: { keyboard: '', midi: undefined },
     down: { keyboard: '', midi: undefined },
@@ -16,6 +23,11 @@ export const keyMap = {
     up: { keyboard: '', midi: undefined },
     down: { keyboard: '', midi: undefined },
     increment: 0.05
+  },
+  lp: {
+    up: { keyboard: '', midi: undefined },
+    down: { keyboard: '', midi: undefined },
+    increment: 20
   },
 };
 

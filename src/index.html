@@ -7,11 +7,6 @@
   <meta name="description" content="A playground for Web Audio API">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!--<link rel="manifest" href="site.webmanifest">-->
-  <!--<link rel="apple-touch-icon" href="icon.png">-->
-  <!-- Place favicon.ico in the root directory -->
-
-  <!--<link rel="stylesheet" href="css/normalize.css">-->
   <link rel="stylesheet" href="css/bootstrap.css">
 </head>
 
@@ -58,6 +53,29 @@
       <button id="cut_button" class="btn btn-primary">Cut (C)</button>
     </div>
 
+    <div class="row">
+      <button id="punch_arm_button" class="btn btn-secondary">Arm Puncher (V)</button>
+      <button id="punch_trigger_button" class="btn btn-primary">Punch In (B)</button>
+    </div>
+
+    <div class="row">
+      <button id="Stretch_button" class="btn btn-primary">Stretch (S)</button>
+      <label for="stretch_length">STRETCH (s)</label>
+      <input type="number" id="stretch_length" value=".1" min="0.01" max="2.0" />
+    </div>
+
+    <div class="row">
+      <input type="range" id="lpfilter_slider" class="" min="40" max="20000" value="20000" list="freq-vals" step="20" />
+      <label for="lpfilter_slider">LO-PASS</label>
+      <datalist id="freq-vals">
+        <option value="20" label="min">
+        <option value="20000" label="max">
+      </datalist>
+      <input type="number" id="lpfilter_value" value="20000" min="40" max="20000" />
+    </div>
+
+
+
   </div>
 
 </body>
@@ -65,6 +83,7 @@
 <footer>
   <script src="js/key_map.js" type="module"></script>
   <script src="js/cutter.js" type="module"></script>
+  <script src="js/puncher.js" type="module"></script>
   <script src="js/main.js" type="module"></script>
 </footer>
 </html>
